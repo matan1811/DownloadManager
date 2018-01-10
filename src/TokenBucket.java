@@ -38,7 +38,7 @@ class TokenBucket {
         sumTokens = tokens;
     }
 
-    void add(long tokens) {
+    synchronized void add(long tokens) {
         sumTokens += tokens;
         if (sumTokens > maxTokens) {
             sumTokens = maxTokens;

@@ -1,4 +1,7 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -18,7 +21,12 @@ public class FileWriter implements Runnable {
     }
 
     private void writeChunks() throws IOException {
-        //TODO
+        while (true) {
+            Chunk chunk = chunkQueue.poll();
+            File file = new File("downloadedfile");
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rws");
+
+        }
     }
 
     @Override

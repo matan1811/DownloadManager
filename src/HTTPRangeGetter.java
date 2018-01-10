@@ -37,7 +37,7 @@ public class HTTPRangeGetter implements Runnable {
         long rangeLength = range.getLength();
         int part = (int) Math.ceil(rangeLength / CHUNK_SIZE); //calculate how many times we need to iterate to read X chunks in the given range
         for (int i = 0; i < part; i++) {
-            byte[] byteChunk = new byte[4096];
+            byte[] byteChunk = new byte[CHUNK_SIZE];
             //jump to the right place in the range to read the next chunk
             inputStream.skip(range.getStart() + (i * CHUNK_SIZE));
             //check whether are there enough tokens to read the chunk
