@@ -1,3 +1,5 @@
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * A Token Bucket (https://en.wikipedia.org/wiki/Token_bucket)
  *
@@ -12,18 +14,19 @@
  */
 
 class TokenBucket {
-    long sumTokens;
-    boolean terminated;
-    final long maxTokens = 10000;
-    TokenBucket() {
+    private AtomicLong tokens;
+    private boolean terminated;
+
+    TokenBucket(long tokens) {
         terminated = false;
-        sumTokens = maxTokens;
+        this.tokens = new AtomicLong();
+        this.tokens.set(tokens);
     }
 
-    synchronized void take(long tokens) {
-        while (sumTokens < tokens){ //not enough available tokens in the bucket
+    void take(long tokens) {
+        while (this.tokens.get() < tokens){ //not enough available tokens in the bucket
         }
-        sumTokens -= tokens;
+        this.tokens.getAndAdd(tokens * -1);
     }
 
     void terminate() {
@@ -35,13 +38,6 @@ class TokenBucket {
     }
 
     void set(long tokens) {
-        sumTokens = tokens;
-    }
-
-    synchronized void add(long tokens) {
-        sumTokens += tokens;
-        if (sumTokens > maxTokens) {
-            sumTokens = maxTokens;
-        }
+        this.tokens.set(tokens);
     }
 }

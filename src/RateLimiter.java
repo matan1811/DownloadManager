@@ -16,14 +16,16 @@ public class RateLimiter implements Runnable {
     @Override
     public void run() {
         while (true) {
-            tokenBucket.add(maxBytesPerSecond);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                System.err.println("sleep function has failed");
-                e.printStackTrace();
+            tokenBucket.set(maxBytesPerSecond);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.err.println("sleep function has failed");
+                    e.printStackTrace();
+                }
+            if (tokenBucket.terminated()) { //TODO is it the best way?
+                break;
             }
         }
-
     }
 }

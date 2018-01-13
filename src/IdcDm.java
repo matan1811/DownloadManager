@@ -1,3 +1,6 @@
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.*;
 
 public class IdcDm {
@@ -45,10 +48,72 @@ public class IdcDm {
      * @param maxBytesPerSecond limit on download bytes-per-second
      */
     private static void DownloadURL(String url, int numberOfWorkers, Long maxBytesPerSecond) {
-        //TODO
         boolean limitDownload = false;
+        TokenBucket tokenBucket = null;
+        Thread rateLimiter = null;
         if (maxBytesPerSecond != null){
             limitDownload = true;
+            tokenBucket = new TokenBucket(maxBytesPerSecond);
+            rateLimiter = new Thread(new RateLimiter(tokenBucket,maxBytesPerSecond));
+            rateLimiter.start();
         }
+        long chunksize = HTTPRangeGetter.CHUNK_SIZE;
+        long fileSize = getFileSize(url);
+        System.out.println("DEBUG: FileSize: " + fileSize);
+        long leftRange = (numberOfWorkers % numberOfWorkers) * chunksize;
+        int numOfChunks = (int) Math.ceil(fileSize / (double) chunksize);
+        BlockingQueue<Chunk> chunkQueue = new ArrayBlockingQueue<Chunk>(numOfChunks);
+        Thread fileWriter = null;
+        DownloadableMetadata downloadableMetadata = null;
+        try {
+            downloadableMetadata = new DownloadableMetadata(url, fileSize);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        fileWriter = new Thread(new FileWriter(downloadableMetadata, chunkQueue));
+        fileWriter.start();
+        //LOOP
+        Range missingRange = downloadableMetadata.getMissingRange();
+        int tmpNumberOfWorkers = numberOfWorkers;
+        while ( missingRange != null) {
+            if (missingRange.getLength() / chunksize < numberOfWorkers - 1){
+                tmpNumberOfWorkers = 1;
+            }
+            numOfChunks = (int) Math.ceil(missingRange.getLength() / (double) chunksize);
+            int chunksPerThread = numOfChunks / tmpNumberOfWorkers;
+            ExecutorService executor = Executors.newFixedThreadPool(tmpNumberOfWorkers);
+            HTTPRangeGetter[] httpRangeGetters = new HTTPRangeGetter[tmpNumberOfWorkers];
+            long start = missingRange.getStart();
+            for (int i = 0; i < tmpNumberOfWorkers; i++) {
+                long end = start + (chunksPerThread * chunksize) - 1;
+                if (i == numberOfWorkers - 1) {
+                    end = fileSize - 1;
+                }
+                httpRangeGetters[i] = new HTTPRangeGetter(url, new Range(start, end), chunkQueue, tokenBucket, limitDownload, fileSize);
+                executor.execute(httpRangeGetters[i]);
+                start = end + 1;
+            }
+            executor.shutdown();
+            while (!executor.isTerminated() || !chunkQueue.isEmpty()) {
+            }
+            tmpNumberOfWorkers = numberOfWorkers;
+        }
+        tokenBucket.terminate();
+        fileWriter.interrupt();//TODO maybe not the best way
+        //TODO
+    }
+    public static long getFileSize(String fileUrl){
+        long fileSize = 0;
+        try {
+            URL url = new URL(fileUrl);
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            // retrieve file size from Content-Length header field
+            fileSize = Long.parseLong(httpURLConnection.getHeaderField("Content-Length"));
+        } catch (Exception e) {
+            e.printStackTrace(); //TODO error handle
+        }
+        return fileSize;
     }
 }

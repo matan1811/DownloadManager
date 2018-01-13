@@ -1,4 +1,5 @@
-import java.io.Serializable;
+import java.io.*;
+import java.util.Arrays;
 
 /**
  * Describes a file's metadata: URL, file name, size, and which parts already downloaded to disk.
@@ -14,12 +15,29 @@ class DownloadableMetadata implements Serializable {
     private String filename;
     private String url;
     private Boolean[] chunkArray;
+    private int lastAccess;
+    private int first;
+    private int laste;
+    int lastStart;
+    int chunkSize;
+    long fileSize;
 
-    DownloadableMetadata(String url, int fileSize) {
+    DownloadableMetadata(String url, long fileSize) throws IOException, ClassNotFoundException {
         this.url = url;
+        this.fileSize = fileSize;
         this.filename = getName(url);
         this.metadataFilename = getMetadataName(filename);
-        this.chunkArray = new Boolean[fileSize / HTTPRangeGetter.CHUNK_SIZE];
+        chunkSize = HTTPRangeGetter.CHUNK_SIZE;
+        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+        if (file.exists()) {
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename));
+            DownloadableMetadata oldMetadata = (DownloadableMetadata) objectInputStream.readObject();
+            this.chunkArray = oldMetadata.chunkArray;
+        } else {
+            this.chunkArray = new Boolean[(int) Math.ceil(fileSize / (double) chunkSize)];
+            Arrays.fill(this.chunkArray,false);
+        }
+        lastStart = 0;
     }
 
     private static String getMetadataName(String filename) {
@@ -31,7 +49,7 @@ class DownloadableMetadata implements Serializable {
     }
 
     void addRange(Range range) {
-        int location = (int) (Math.ceil(range.getEnd() / HTTPRangeGetter.CHUNK_SIZE)) - 1;
+        int location = (int) (Math.ceil(range.getEnd() / (double) chunkSize)) - 1;
         chunkArray[location] = true;
     }
 
@@ -39,27 +57,41 @@ class DownloadableMetadata implements Serializable {
         return filename;
     }
 
+    String getMetadataFilename() {
+        return metadataFilename;
+    }
+
     boolean isCompleted() {
-        for (Boolean chunk : chunkArray){
+        for (Boolean chunk : chunkArray) {
             if (chunk == false) return false;
         }
         return true;
     }
 
     void delete() {
-        //TODO
+        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+        file.delete();
     }
-
-    Range getMissingRange() {
-        for (int i = 0 ; i < chunkArray.length ; i++){
-            if (chunkArray[i] == false){
-                long end = ((i + 1) * 1024) - 1;
-                return new Range(end - HTTPRangeGetter.CHUNK_SIZE ,end);
+    synchronized Range getMissingRange() {
+        boolean firstMissing = true;
+        long rangeStart = 0, rangeEnd = 0;
+        for (int i = lastStart; i < chunkArray.length; i++) {
+            if (chunkArray[i] == false && firstMissing) {
+                rangeStart = i * chunkSize;
+                rangeEnd = rangeStart + chunkSize;
+                firstMissing = false;
+            }else if (i == chunkArray.length - 1){
+                lastStart = i;
+                return new Range(rangeStart, fileSize - 1);
+            } else if ((chunkArray[i] == true && !firstMissing)) {
+                lastStart = i;
+                return new Range(rangeStart, rangeEnd - 1);
+            } else if (chunkArray[i] == false && !firstMissing) {
+                rangeEnd += chunkSize;
             }
         }
         return null;
     }
-
     String getUrl() {
         return url;
     }
