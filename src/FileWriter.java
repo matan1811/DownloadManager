@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.file.Files;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -31,9 +32,10 @@ public class FileWriter implements Runnable {
                 ObjectOutputStream tmpObjectOutputStream = new ObjectOutputStream(tempMetadata);
                 randomAccessFile.seek(chunk.getOffset());
                 randomAccessFile.write(chunk.getData());
+                randomAccessFile.close();
                 downloadableMetadata.addRange(new Range(chunk.getOffset(), chunk.getOffset() + HTTPRangeGetter.CHUNK_SIZE));
-                tmpObjectOutputStream.writeObject(downloadableMetadata);
-                tempMetadata.close();
+                tmpObjectOutputStream.writeObject(downloadableMetadata.getChunkArray());
+                tmpObjectOutputStream.close();
                 File metaFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename());
                 File tmpFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename() + ".tmp");
                 if (metaFile.exists()) {

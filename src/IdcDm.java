@@ -1,4 +1,7 @@
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.*;
@@ -48,6 +51,15 @@ public class IdcDm {
      * @param maxBytesPerSecond limit on download bytes-per-second
      */
     private static void DownloadURL(String url, int numberOfWorkers, Long maxBytesPerSecond) {
+        FileOutputStream tempMetadata = null;
+        long fileSize = getFileSize(url);
+//        try {
+//            tempMetadata = new FileOutputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\test");
+//            ObjectOutputStream tmpObjectOutputStream = new ObjectOutputStream(tempMetadata);
+//            tmpObjectOutputStream.writeObject(new DownloadableMetadata(url, fileSize));
+//        } catch (IOException | ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
         boolean limitDownload = false;
         TokenBucket tokenBucket = null;
         Thread rateLimiter = null;
@@ -58,7 +70,6 @@ public class IdcDm {
             rateLimiter.start();
         }
         long chunksize = HTTPRangeGetter.CHUNK_SIZE;
-        long fileSize = getFileSize(url);
         System.out.println("DEBUG: FileSize: " + fileSize);
         long leftRange = (numberOfWorkers % numberOfWorkers) * chunksize;
         int numOfChunks = (int) Math.ceil(fileSize / (double) chunksize);
@@ -98,10 +109,14 @@ public class IdcDm {
             executor.shutdown();
             while (!executor.isTerminated() || !chunkQueue.isEmpty()) {
             }
+            missingRange = downloadableMetadata.getMissingRange();
             tmpNumberOfWorkers = numberOfWorkers;
         }
-        tokenBucket.terminate();
+        if (tokenBucket != null) {
+            tokenBucket.terminate();
+        }
         fileWriter.interrupt();//TODO maybe not the best way
+        downloadableMetadata.delete();
         //TODO
     }
     public static long getFileSize(String fileUrl){

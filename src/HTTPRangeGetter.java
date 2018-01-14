@@ -70,10 +70,15 @@ public class HTTPRangeGetter implements Runnable {
             }
             //reDo the read operation if the operation reads less than the bytes it should read
             int output = inputStream.read(byteChunk,0,chunkSize);
-            if (range.getEnd() < rangesum){
+            if (range.getEnd() < rangesum) {
+                break;
+            } else if (output == -1){
                 break;
             } else if (output != chunkSize) {
-                output = inputStream.read(byteChunk,output,chunkSize - output);
+                int output1 = inputStream.read(byteChunk,output,chunkSize - output);
+                if (output1 != chunkSize - output){
+                    inputStream.read(byteChunk,output,chunkSize - output -output1);
+                }
             }
             outQueue.add(new Chunk(byteChunk, range.getStart() + (CHUNK_SIZE * i), chunkSize));
             i++;

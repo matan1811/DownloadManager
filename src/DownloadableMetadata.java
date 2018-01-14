@@ -13,17 +13,17 @@ import java.util.Arrays;
 class DownloadableMetadata implements Serializable {
     private final String metadataFilename;
     private String filename;
-    private String url;
-    private Boolean[] chunkArray;
-    private int lastAccess;
-    private int first;
-    private int laste;
+    //private String url;
+    private boolean[] chunkArray;
+//    private int lastAccess;
+//    private int first;
+//    private int laste;
     int lastStart;
     int chunkSize;
     long fileSize;
 
     DownloadableMetadata(String url, long fileSize) throws IOException, ClassNotFoundException {
-        this.url = url;
+        //this.url = url;
         this.fileSize = fileSize;
         this.filename = getName(url);
         this.metadataFilename = getMetadataName(filename);
@@ -31,10 +31,10 @@ class DownloadableMetadata implements Serializable {
         File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
         if (file.exists()) {
             ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename));
-            DownloadableMetadata oldMetadata = (DownloadableMetadata) objectInputStream.readObject();
-            this.chunkArray = oldMetadata.chunkArray;
+            boolean[] oldArray = (boolean[]) objectInputStream.readObject();
+            this.chunkArray = oldArray;
         } else {
-            this.chunkArray = new Boolean[(int) Math.ceil(fileSize / (double) chunkSize)];
+            this.chunkArray = new boolean[(int) Math.ceil(fileSize / (double) chunkSize)];
             Arrays.fill(this.chunkArray,false);
         }
         lastStart = 0;
@@ -61,12 +61,15 @@ class DownloadableMetadata implements Serializable {
         return metadataFilename;
     }
 
-    boolean isCompleted() {
-        for (Boolean chunk : chunkArray) {
-            if (chunk == false) return false;
-        }
-        return true;
+    boolean[] getChunkArray(){
+        return chunkArray;
     }
+//    boolean isCompleted() {
+//        for (Boolean chunk : chunkArray) {
+//            if (chunk == false) return false;
+//        }
+//        return true;
+//    }
 
     void delete() {
         File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
@@ -77,14 +80,14 @@ class DownloadableMetadata implements Serializable {
         long rangeStart = 0, rangeEnd = 0;
         for (int i = lastStart; i < chunkArray.length; i++) {
             if (chunkArray[i] == false && firstMissing) {
-                rangeStart = i * chunkSize;
+                rangeStart = (i * chunkSize);
                 rangeEnd = rangeStart + chunkSize;
                 firstMissing = false;
             }else if (i == chunkArray.length - 1){
-                lastStart = i;
+                lastStart = i + 1;
                 return new Range(rangeStart, fileSize - 1);
             } else if ((chunkArray[i] == true && !firstMissing)) {
-                lastStart = i;
+                lastStart = i + 1;
                 return new Range(rangeStart, rangeEnd - 1);
             } else if (chunkArray[i] == false && !firstMissing) {
                 rangeEnd += chunkSize;
@@ -92,7 +95,7 @@ class DownloadableMetadata implements Serializable {
         }
         return null;
     }
-    String getUrl() {
-        return url;
-    }
+//    String getUrl() {
+//        return url;
+//    }
 }
