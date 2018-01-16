@@ -124,6 +124,7 @@ public class IdcDm {
             e.printStackTrace();
         }
         downloadableMetadata.delete();
+        System.err.println("Download succeeded");
         //TODO
     }
     public static long getFileSize(String fileUrl){

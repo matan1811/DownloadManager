@@ -21,9 +21,11 @@ class DownloadableMetadata implements Serializable {
     int lastStart;
     int chunkSize;
     long fileSize;
+    long chunksRead;
 
     DownloadableMetadata(String url, long fileSize) throws IOException, ClassNotFoundException {
         //this.url = url;
+        this.chunksRead = 0;
         this.fileSize = fileSize;
         this.filename = getName(url);
         this.metadataFilename = getMetadataName(filename);
@@ -44,6 +46,11 @@ class DownloadableMetadata implements Serializable {
             this.chunkArray = new boolean[(int) Math.ceil(fileSize / (double) chunkSize)];
             Arrays.fill(this.chunkArray,false);
         }
+        for (int i = 0 ; i < this.chunkArray.length ; i++){
+            if (this.chunkArray[i] == true){
+                this.chunksRead++;
+            }
+        }
         lastStart = 0;
     }
 
@@ -57,7 +64,14 @@ class DownloadableMetadata implements Serializable {
 
     void addRange(Range range) {
         int location = (int) (Math.ceil(range.getEnd() / (double) chunkSize)) - 1;
+        if (chunkArray[location] == true){
+            return;
+        }
         chunkArray[location] = true;
+        chunksRead++;
+        if (chunksRead % ((chunkArray.length / 100) + 1) == 0) {
+            System.err.println("Downloaded" + (int) ((chunksRead / (double) chunkArray.length) * 100) + "%" );
+        }
     }
 
     String getFilename() {
