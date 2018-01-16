@@ -81,7 +81,7 @@ class DownloadableMetadata implements Serializable {
     void delete() {
 //        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
         File file = new File(metadataFilename);
-        File tmpFile = new File(metadataFilename);
+        File tmpFile = new File(metadataFilename + ".tmp");
         file.delete();
         tmpFile.delete();
     }
@@ -93,7 +93,10 @@ class DownloadableMetadata implements Serializable {
                 rangeStart = (i * chunkSize);
                 rangeEnd = rangeStart + chunkSize;
                 firstMissing = false;
-            }else if (i == chunkArray.length - 1){
+                if (i == chunkArray.length - 1){
+                    return new Range(rangeStart, fileSize - 1);
+                }
+            }else if (i == chunkArray.length - 1 && !firstMissing){
                 lastStart = i + 1;
                 return new Range(rangeStart, fileSize - 1);
             } else if ((chunkArray[i] == true && !firstMissing)) {

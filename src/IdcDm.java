@@ -107,10 +107,12 @@ public class IdcDm {
                 start = end + 1;
             }
             executor.shutdown();
-            while (!executor.isTerminated() || !chunkQueue.isEmpty()) {
+            while (! executor.isTerminated()) {
             }
             missingRange = downloadableMetadata.getMissingRange();
             tmpNumberOfWorkers = numberOfWorkers;
+        }
+        while (! chunkQueue.isEmpty()) {
         }
         if (tokenBucket != null) {
             tokenBucket.terminate();
