@@ -26,8 +26,10 @@ public class FileWriter implements Runnable {
         while (true) {
             Chunk chunk = chunkQueue.poll();
             if (chunk != null) {
-                File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getFilename());
-                FileOutputStream tempMetadata = new FileOutputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename() + ".tmp");
+//                File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getFilename());
+                File file = new File(downloadableMetadata.getFilename());
+//                FileOutputStream tempMetadata = new FileOutputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename() + ".tmp");
+                FileOutputStream tempMetadata = new FileOutputStream(downloadableMetadata.getMetadataFilename() + ".tmp");
                 RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rws");
                 ObjectOutputStream tmpObjectOutputStream = new ObjectOutputStream(tempMetadata);
                 randomAccessFile.seek(chunk.getOffset());
@@ -36,8 +38,10 @@ public class FileWriter implements Runnable {
                 downloadableMetadata.addRange(new Range(chunk.getOffset(), chunk.getOffset() + HTTPRangeGetter.CHUNK_SIZE));
                 tmpObjectOutputStream.writeObject(downloadableMetadata.getChunkArray());
                 tmpObjectOutputStream.close();
-                File metaFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename());
-                File tmpFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename() + ".tmp");
+//                File metaFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename());
+                File metaFile = new File(downloadableMetadata.getMetadataFilename());
+//                File tmpFile = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + downloadableMetadata.getMetadataFilename() + ".tmp");
+                File tmpFile = new File(downloadableMetadata.getMetadataFilename() + ".tmp");
                 if (metaFile.exists()) {
                     metaFile.delete();
                 }

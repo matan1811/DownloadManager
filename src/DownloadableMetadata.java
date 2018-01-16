@@ -28,9 +28,16 @@ class DownloadableMetadata implements Serializable {
         this.filename = getName(url);
         this.metadataFilename = getMetadataName(filename);
         chunkSize = HTTPRangeGetter.CHUNK_SIZE;
-        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+//        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+        File file = new File(metadataFilename);
+        File tmpFile = new File(metadataFilename + ".tmp");
         if (file.exists()) {
-            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename));
+//            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename));
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(metadataFilename));
+            boolean[] oldArray = (boolean[]) objectInputStream.readObject();
+            this.chunkArray = oldArray;
+        } else if (tmpFile.exists()){
+            ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(metadataFilename + ".tmp"));
             boolean[] oldArray = (boolean[]) objectInputStream.readObject();
             this.chunkArray = oldArray;
         } else {
@@ -72,8 +79,11 @@ class DownloadableMetadata implements Serializable {
 //    }
 
     void delete() {
-        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+//        File file = new File("C:\\Users\\matan\\Google Drive\\CS2015_6\\Year3\\net\\DownloaManager\\" + metadataFilename);
+        File file = new File(metadataFilename);
+        File tmpFile = new File(metadataFilename);
         file.delete();
+        tmpFile.delete();
     }
     synchronized Range getMissingRange() {
         boolean firstMissing = true;

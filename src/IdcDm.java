@@ -116,6 +116,11 @@ public class IdcDm {
             tokenBucket.terminate();
         }
         fileWriter.interrupt();//TODO maybe not the best way
+        try {
+            fileWriter.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         downloadableMetadata.delete();
         //TODO
     }
